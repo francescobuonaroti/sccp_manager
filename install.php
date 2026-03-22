@@ -657,12 +657,12 @@ function InstallDB_updateSchema($db_config)
             if (!empty($tab_modify[$fld_id])) {
                 $db_config[$tabl_name][$fld_id]['status'] = 'yes';
                 if (!empty($tab_modify[$fld_id]['def_modify'])) {
-                    if (strtoupper($tab_modify[$fld_id]['def_modify']) == strtoupper($tabl_data[4])) {
+                    if (strtoupper((string) $tab_modify[$fld_id]['def_modify']) == strtoupper((string) ($tabl_data[4] ?? ''))) {
                         $db_config[$tabl_name][$fld_id]['def_mod_stat'] = 'no';
                     }
                 }
                 if (!empty($tab_modify[$fld_id]['modify'])) {
-                    if (strtoupper($tab_modify[$fld_id]['modify']) == strtoupper($tabl_data[1])) {
+                    if (strtoupper((string) $tab_modify[$fld_id]['modify']) == strtoupper((string) ($tabl_data[1] ?? ''))) {
                         $db_config[$tabl_name][$fld_id]['mod_stat'] = 'no';
                     }
                 }
@@ -672,7 +672,7 @@ function InstallDB_updateSchema($db_config)
                     if (!empty($db_config[$tabl_name][$fld_id_source]['create'])) {
                         $db_config[$tabl_name][$fld_id]['create'] = $db_config[$tabl_name][$fld_id_source]['create'];
                     } else {
-                        $db_config[$tabl_name][$fld_id]['create'] = strtoupper($tabl_data[1]).(($tabl_data[2] == 'NO') ?' NOT NULL': ' NULL');
+                        $db_config[$tabl_name][$fld_id]['create'] = strtoupper((string) ($tabl_data[1] ?? '')).(((string) ($tabl_data[2] ?? '') == 'NO') ?' NOT NULL': ' NULL');
                         $db_config[$tabl_name][$fld_id]['create'] .= ' DEFAULT '. ((empty($tabl_data[4]))?'NULL': "'". $tabl_data[4]."'" );
                     }
                 }
