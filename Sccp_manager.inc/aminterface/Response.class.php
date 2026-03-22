@@ -18,6 +18,7 @@ abstract class Response extends IncomingMessage
 {
 
     protected $_events;
+    protected $_eventsCount;
     protected $_completed;
     protected $keys;
 
