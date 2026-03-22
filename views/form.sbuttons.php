@@ -6,8 +6,8 @@
  * and open the template in the editor.
  */
 $forminfo =array(
-                array("name"=>"dev_buttons",label=>"Buttons Configuration"),
-                array("name"=>"button",label=>"Buttons ",help=>"help.")
+                array("name"=>"dev_buttons", "label"=>"Buttons Configuration"),
+                array("name"=>"button", "label"=>"Buttons ", "help"=>"help.")
     );
 //$buttons_type=  array("empty","line","service","feature","speeddial");
 //   "feature","service" -- Add leter !
@@ -19,6 +19,7 @@ $feature_list=  array('parkinglot'=>'Park Slots','monitor'=> "Record Calls",'dev
 $lines_list = $this->sipconfigs->get_db_sip_TableData('Device');
 //$hint_list  = $this->dbinterface->HWextension_db_SccpTableData('SccpExtension');
 $hint_list  = $this->getHintInformation(true, array('context'=>'park-hints')) ;
+$db_buttons = array();
 
 // print_r($lines_list);
 $line_id =0;
@@ -29,21 +30,21 @@ if (!empty($_REQUEST['id'])) {
     $dev_id = $_REQUEST['id'];
     $db_buttons = $this->dbinterface->HWextension_db_SccpTableData('get_sccpdevice_buttons', array("id" => $dev_id));
     $db_device = $this->dbinterface->HWextension_db_SccpTableData('get_sccpdevice_byid', array("id" => $dev_id));
-    $max_buttons = $db_device['buttons'];
+    $max_buttons = (int)($db_device['buttons'] ?? $max_buttons);
     if (!empty($db_device['addon_buttons'])) {
         $max_buttons += $db_device['addon_buttons'];
     }
     $show_buttons = $max_buttons;
 }
 if (!empty($_REQUEST['new_id'])) {
-    $val = $_REQUEST['type'];
+    $val = $_REQUEST['type'] ?? '';
     $dev_schema =  $this-> getSccpModelInformation('byid', false, "all", array('model' =>$val));
 //   $db_device = $this->dbinterface->HWextension_db_SccpTableData('get_sccpdevice_byid', array("id" => $val));
-    $max_buttons = $dev_schema[0]['buttons'];
+    $max_buttons = (int)($dev_schema[0]['buttons'] ?? $max_buttons);
     if (!empty($_REQUEST['addon'])) {
         $val = $_REQUEST['addon'];
         $dev_schema =  $this-> getSccpModelInformation('byid', false, "all", array('model' =>$val));
-        $max_buttons += $dev_schema[0]['buttons'];
+        $max_buttons += (int)($dev_schema[0]['buttons'] ?? 0);
     }
     $show_buttons = $max_buttons;
 }
@@ -89,10 +90,11 @@ if (!empty($_REQUEST['ru_id'])) {
     <?php
     for ($line_id = 0; $line_id <=$max_buttons; $line_id ++) {
 //          print_r($db_buttons[$line_id]);
+        $button_data = $db_buttons[$line_id] ?? array();
         $show_form_mode = '';
-        $defaul_tv = (empty($db_buttons[$line_id])) ?  "empty": $db_buttons[$line_id]['buttontype'];
-        $defaul_btn = (empty($db_buttons[$line_id])) ?  "": $db_buttons[$line_id]['name'];
-        $defaul_opt = (empty($db_buttons[$line_id])) ?  array(''): explode(',', $db_buttons[$line_id]['options']);
+        $defaul_tv = (empty($button_data)) ?  "empty": ($button_data['buttontype'] ?? 'empty');
+        $defaul_btn = (empty($button_data)) ?  "": ($button_data['name'] ?? '');
+        $defaul_opt = (empty($button_data)) ?  array(''): explode(',', ($button_data['options'] ?? ''));
 
         $show_form_mode = $defaul_tv;
         $def_hint = '';       // Hint check Box
@@ -188,7 +190,7 @@ if (!empty($_REQUEST['ru_id'])) {
 <!--  if Line Type = Othe Show    Input -->
                         <div data-type='speeddial' class="lineid_<?php echo $line_id.(($show_form_mode=='speeddial')? '':' hidden');?>" >
                             <?php
-                            echo '<input class="form-control" type="text" id="'.$forminfo[1]['name'].$line_id.'_input"  name="'.$forminfo[1]['name'].$line_id.'_input" placeholder="Name" value="'.$db_buttons[$line_id]['name'].'" >';
+                            echo '<input class="form-control" type="text" id="'.$forminfo[1]['name'].$line_id.'_input"  name="'.$forminfo[1]['name'].$line_id.'_input" placeholder="Name" value="'.($button_data['name'] ?? '').'" >';
                             ?>
                         </div>
                         </div>
@@ -208,8 +210,8 @@ if (!empty($_REQUEST['ru_id'])) {
                             echo '<select  class="form-control" name="'.$forminfo[1]['name'].$line_id.'_hline" >';
                                 
                             foreach ($hint_list as $data) {
-                                $select = (($data['key']==$def_hint_btn)?"selected":"");
-                                echo '<option value="'.$data['key'].'" '.$select.' >'.$data['exten'].' / '.$data['label'].'</option>';
+                                $select = ((($data['key'] ?? '')==$def_hint_btn)?"selected":"");
+                                echo '<option value="'.($data['key'] ?? '').'" '.$select.' >'.($data['exten'] ?? '').' / '.($data['label'] ?? '').'</option>';
                             }
                             echo '</select>';
                             echo '</div>';
@@ -219,7 +221,7 @@ if (!empty($_REQUEST['ru_id'])) {
                         <div data-type='feature' class="lineid_<?php echo $line_id.(($show_form_mode=='feature')? '':' hidden');?>" name="<?php echo $forminfo[1]['name'].$line_id.'_hint';?>">
                             <div class="col-xs-5">
                             <?php
-                            echo '<input class="form-control" type="text" id="'.$forminfo[1]['name'].$line_id.'_flabel"  name="'.$forminfo[1]['name'].$line_id.'_flabel" placeholder="Display Label" value="'.$db_buttons[$line_id]['name'].'" >';
+                            echo '<input class="form-control" type="text" id="'.$forminfo[1]['name'].$line_id.'_flabel"  name="'.$forminfo[1]['name'].$line_id.'_flabel" placeholder="Display Label" value="'.($button_data['name'] ?? '').'" >';
                             ?>
                             </div>
                             <div class="col-xs-5">
@@ -238,7 +240,7 @@ if (!empty($_REQUEST['ru_id'])) {
                             </div>
                             <div class="col-xs-5">
                             <?php
-                            echo '<input class="form-control" type="text" id="'.$forminfo[1]['name'].$line_id.'_advopt"  name="'.$forminfo[1]['name'].$line_id.'_advopt" placeholder="ButtonLabel,Options" value="'.$db_buttons[$line_id]['options'].'" >';
+                            echo '<input class="form-control" type="text" id="'.$forminfo[1]['name'].$line_id.'_advopt"  name="'.$forminfo[1]['name'].$line_id.'_advopt" placeholder="ButtonLabel,Options" value="'.($button_data['options'] ?? '').'" >';
                             ?>
                             </div>
                         </div>

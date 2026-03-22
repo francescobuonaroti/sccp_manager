@@ -13,6 +13,7 @@ $sccp_codec = $this->getCodecs('audio', true);
 $video_codecs = $this->getCodecs('video', true);
 $sccp_disalow_def = $this->extconfigs->getextConfig('sccpDefaults', 'disallow');
 $sccp_disalow = $sccp_disalow_def;
+$codec_list = $sccp_codec;
 
 if (!empty($_REQUEST['id'])) {
     $dev_id = $_REQUEST['id'];
@@ -32,8 +33,6 @@ if (!empty($_REQUEST['id'])) {
     if (!empty($db_res['disallow'])) {
         $sccp_disalow = $db_res['disallow'];
     }
-} else {
-    $codec_list = $sccp_codec;
 }
         
 ?>

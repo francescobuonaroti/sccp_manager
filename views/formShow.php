@@ -42,6 +42,8 @@ $sofkey_list = array();
 $model_list = array();
 $device_list = array();
 $dialplan_list = array();
+$syslangs = array();
+$moh_list = array();
         
 //$time_zone = \FreePBX::Sccp_manager()-> extconfigs-> getextConfig('cisco_time');
 //$system_time_zone = \FreePBX::Sccp_manager()->getSysnemTimeZone();
@@ -72,6 +74,13 @@ if (!is_array($moh_list)) {
 
 $items = $itm -> children();
 
+if (!is_array($fvalues)) {
+    $fvalues = array();
+}
+if (!is_array($metainfo)) {
+    $metainfo = array();
+}
+
 if ($h_show==1) {
     $sec_class ='';
     if (!empty($items ->class)) {
@@ -100,7 +109,7 @@ foreach ($items as $child) {
         $res_id = $npref.$res_oid;
         if (!empty($metainfo[$res_oid])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_oid]['Description'];
+                $child->help = $metainfo[$res_oid]['Description'] ?? $child->help;
             }
         }
 
@@ -188,7 +197,7 @@ foreach ($items as $child) {
 
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
 //        $res_value
@@ -282,12 +291,13 @@ foreach ($items as $child) {
                                     $res_n = $res_id.'['.$i.']['.$value['field'].']';
                                     $fields_id = (string)$value['field'];
                                     $opt_at[$fields_id]['nameseparator']=(string)$value['nameseparator'];
+                                    $opt_at[$fields_id]['class']='form-control';
                                     if (!empty($value->class)) {
                                         $opt_at[$fields_id]['class']='form-control ' .(string)$value->class;
                                     }
                                     $opt_at[$fields_id]['nameseparator']=(string)$value['nameseparator'];
                                 
-                                    echo '<input type="text" name="'. $res_n.'" class="'.$opt_at[$fields_id]['class'].'" value="'.$res_vf[$i2].'"';
+                                    echo '<input type="text" name="'. $res_n.'" class="'.$opt_at[$fields_id]['class'].'" value="'.($res_vf[$i2] ?? '').'"';
                                     if (isset($value->options)) {
                                         foreach ($value->options ->attributes() as $optkey => $optval) {
                                             $opt_at[$fields_id]['options'][$optkey]=(string)$optval;
@@ -331,7 +341,7 @@ foreach ($items as $child) {
         $res_id = $npref.$child->name;
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
         
@@ -417,7 +427,7 @@ foreach ($items as $child) {
         $res_id = $npref.$res_n;
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
         
@@ -497,7 +507,7 @@ foreach ($items as $child) {
 
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
 
@@ -513,7 +523,7 @@ foreach ($items as $child) {
         }
 
         if ($child['type'] == 'SLA') {
-            $select_opt ='';
+            $select_opt = array();
             if (!empty($fvalues[$res_n])) {
                 if (!empty($fvalues[$res_n]['data'])) {
                     $res_value = explode(';', $fvalues[$res_n]['data']);
@@ -589,7 +599,7 @@ foreach ($items as $child) {
 
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
         
@@ -650,7 +660,7 @@ foreach ($items as $child) {
 
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
         
@@ -661,36 +671,42 @@ foreach ($items as $child) {
             if (empty($model_list)) {
                 $model_list = \FreePBX::Sccp_manager()->dbinterface->HWextension_db_SccpTableData("HWDevice");
             }
-            $select_opt= $model_list;
+            $select_opt= is_array($model_list) ? $model_list : array();
         }
         if ($child['type'] == 'SDMS') {
             if (empty($model_list)) {
                 $model_list = \FreePBX::Sccp_manager()->dbinterface->HWextension_db_SccpTableData("HWSipDevice");
             }
-            $select_opt= $model_list;
+            $select_opt= is_array($model_list) ? $model_list : array();
         }
         if ($child['type'] == 'SDE') {
             if (empty($extension_list)) {
                 $extension_list = \FreePBX::Sccp_manager()->dbinterface->HWextension_db_SccpTableData("HWextension");
+                if (!is_array($extension_list)) {
+                    $extension_list = array();
+                }
                 $extension_list[]=array( 'model' => 'NONE', 'vendor' => 'CISCO', 'dns' => '0');
                 foreach ($extension_list as &$data) {
-                    $d_name = explode(';', $data['model']);
+                    $d_name = explode(';', $data['model'] ?? '');
                     if (is_array($d_name) && (count($d_name) > 1)) {
                         $data['description'] = count($d_name).'x '.$d_name[0];
                     } else {
-                        $data['description'] = $data['model'];
+                        $data['description'] = $data['model'] ?? '';
                     }
                 }
                 unset($data);
             }
-            $select_opt= $extension_list;
+            $select_opt= is_array($extension_list) ? $extension_list : array();
         }
         if ($child['type'] == 'SDD') {
             if (empty($device_list)) {
                 $device_list = \FreePBX::Sccp_manager()->dbinterface->HWextension_db_SccpTableData("SccpDevice");
+                if (!is_array($device_list)) {
+                    $device_list = array();
+                }
                 $device_list[]=array('name' => 'NONE', 'description' => 'No Device');
             }
-            $select_opt = $device_list;
+            $select_opt = is_array($device_list) ? $device_list : array();
         }
 
         echo '<!-- Begin '.$child->label.' -->';
@@ -726,19 +742,20 @@ foreach ($items as $child) {
                     }
                             
                     foreach ($select_opt as $data) {
-                        echo '<option value="' . $data[$fld] . '"';
-                        if ($key == $data[$fld]) {
+                        $opt_value = $data[$fld] ?? '';
+                        echo '<option value="' . $opt_value . '"';
+                        if ($key == $opt_value) {
                             echo ' selected="selected"';
                         }
                         if (!empty($flk)) {
-                            echo ' data-id="'.$data[$flk].'"';
+                            echo ' data-id="'.($data[$flk] ?? '').'"';
                         }
                         if (!empty($flkv)) {
-                            echo ' data-val="'.$data[$flkv].'"';
+                            echo ' data-val="'.($data[$flkv] ?? '').'"';
                         }
-                        echo '>' . $data[$flv];
+                        echo '>' . ($data[$flv] ?? '');
                         if (!empty($flv2)) {
-                            echo ' / '.$data[$flv2];
+                            echo ' / '.($data[$flv2] ?? '');
                         }
                         echo '</option>';
                     }
@@ -779,6 +796,7 @@ foreach ($items as $child) {
 
         <?php
         foreach ($res_value as $dat_v) {
+            $opt_at = array();
             echo '<tr data-nextid="'.($i+1).'" class="'.$res_id.'" id="'.$res_id.'-row-'.($i).'"> ';
             if (!empty($child->label)) {
                 echo '<td class=""> <div class="input-group">'.$child->label.'</div></td>';
@@ -812,13 +830,13 @@ foreach ($items as $child) {
                 $res_opt['inp_end'] = '<span class="input-group-addon" id="bases_'.$res_n.'">'.$opt_at[$fields_id]['display_sufix'].'</span></div>';
                 switch ($value['type']) {
                     case 'date':
-                        echo $res_opt['inp_st'].'<input type="date" name="'. $res_n.'" value="'.$res_vf[$i2].'"'.$res_opt['addon']. '>'.$res_opt['inp_end'];
+                        echo $res_opt['inp_st'].'<input type="date" name="'. $res_n.'" value="'.($res_vf[$i2] ?? '').'"'.$res_opt['addon']. '>'.$res_opt['inp_end'];
                         break;
                     case 'number':
-                        echo $res_opt['inp_st'].'<input type="number" name="'. $res_n.'" value="'.$res_vf[$i2].'"'.$res_opt['addon']. '>'.$res_opt['inp_end'];
+                        echo $res_opt['inp_st'].'<input type="number" name="'. $res_n.'" value="'.($res_vf[$i2] ?? '').'"'.$res_opt['addon']. '>'.$res_opt['inp_end'];
                         break;
                     case 'input':
-                        echo $res_opt['inp_st'].'<input type="text" name="'. $res_n.'" value="'.$res_vf[$i2].'"'.$res_opt['addon']. '>'.$res_opt['inp_end'];
+                        echo $res_opt['inp_st'].'<input type="text" name="'. $res_n.'" value="'.($res_vf[$i2] ?? '').'"'.$res_opt['addon']. '>'.$res_opt['inp_end'];
                         break;
                     case 'title':
                         if ($i > 0) {
@@ -834,7 +852,7 @@ foreach ($items as $child) {
                         foreach ($value->xpath('data') as $optselect) {
                             $opt_at[$fields_id]['data'].= (string)$optselect.';';
                             echo '<option value="' . $optselect. '"';
-                            if (strtolower((string)$optselect) == strtolower((string)$res_vf[$i2])) {
+                            if (strtolower((string)$optselect) == strtolower((string)($res_vf[$i2] ?? ''))) {
                                 echo ' selected="selected"';
                             }
                             echo '>' . (string)$optselect. '</option>';
@@ -942,12 +960,12 @@ foreach ($items as $child) {
 
         if (!empty($metainfo[$res_n])) {
             if ($child->meta_help == '1' || $child->help == 'Help!') {
-                $child->help = $metainfo[$res_n]['Description'];
+                $child->help = $metainfo[$res_n]['Description'] ?? $child->help;
             }
         }
 
         $time_regions = array('Africa', 'America', 'Antarctica', 'Arctic', 'Asia', 'Atlantic', 'Australia', 'Europe', 'Russian', 'Indian', 'Pacific');
-        $time_zone_global = DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC);
+        $time_zone_global = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL_WITH_BC);
         $time_zone_ru = array('Russian/Kaliningrad', 'Russian/Moscow', 'Russian/St.Peterburg', 'Russian/Samara', 'Russian/Novosibirsk', 'Russian/Ekaterinburg', 'Russian/Irkutsk', 'Russian/Yakutsk', 'Russian/Khabarovsk', 'Russian/Vladivostok', 'Russian/Sakhalin', 'Russian/Magadan', 'Russian/Kamchatka');
         $time_zone_list = array_merge($time_zone_global, $time_zone_ru);
         $optgroup = '';

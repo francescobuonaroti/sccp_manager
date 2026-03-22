@@ -10,6 +10,7 @@
 
 namespace FreePBX\modules\Sccp_manager;
 
+#[\AllowDynamicProperties]
 class aminterface
 {
 
@@ -178,7 +179,7 @@ class aminterface
                 break;
             }
         }
-        $this->_errorException("Read waittime: " . ($this->socket_param['timeout']) . " exceeded (timeout).\n");
+        $this->_errorException("Read waittime: " . ($this->_config['timeout']) . " exceeded (timeout).\n");
     }
 
     protected function getRelated($message)
@@ -217,7 +218,7 @@ class aminterface
         }
         $this->_ProcessingMessage .= $read;
         $this->_DumpMessage .= $read;
-        while (($marker = strpos($this->_ProcessingMessage, aminterface\Message::EOM))) {
+        while (($marker = strpos($this->_ProcessingMessage, aminterface\Message::EOM)) !== false) {
             $msg = substr($this->_ProcessingMessage, 0, $marker);
             $this->_ProcessingMessage = substr(
                 $this->_ProcessingMessage,

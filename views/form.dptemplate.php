@@ -18,7 +18,8 @@ if (!empty($_REQUEST['extdisplay'])) {
 if ($dev_id != '*new*') {
     $list_data= $this->getDialPlan($dev_id);
     $data_s= '';
-    foreach ($list_data['template'] as $key => $value) {
+    $dial_templates = $list_data['template'] ?? array();
+    foreach ($dial_templates as $key => $value) {
         foreach ($dialFelds as $fld) {
             if (isset($value[$fld])) {
                 $data_s .=(string)$value[$fld];

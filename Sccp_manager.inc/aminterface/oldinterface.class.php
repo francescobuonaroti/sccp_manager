@@ -10,6 +10,7 @@
 
 namespace FreePBX\modules\Sccp_manager;
 
+#[\AllowDynamicProperties]
 class oldinterface
 {
 

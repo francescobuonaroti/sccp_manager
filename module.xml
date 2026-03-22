@@ -1,10 +1,10 @@
 <module>
 	<rawname>sccp_manager</rawname>
 	<name>SCCP Manager</name>
-	<version>14.0.0.2M</version>
+	<version>17.0.0.1</version>
 	<type>setup</type>
 	<category>SCCP Connectivity</category>
-	<publisher>Alex GP</publisher>
+	<publisher>Francesco Buonaroti</publisher>
         <repo>extended</repo>
 	<description>SCCP Phone and Extension Manager</description>
 	<menuitems>
@@ -19,7 +19,11 @@
 	</changelog>
 	<location></location>
 	<supported>
-		<version>13.0.0.2M</version>
+		<version>13.0</version>
+		<version>14.0</version>
+		<version>15.0</version>
+		<version>16.0</version>
+		<version>17.0</version>
 	</supported>
         <info>https://github.com/PhantomVl/sccp_manager</info>
         <license>GPL</license>

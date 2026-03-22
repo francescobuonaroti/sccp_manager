@@ -11,13 +11,14 @@ $test_any = 0;
 $driver = $this->FreePBX->Core->getAllDriversInfo();
 $core = $this->srvinterface->getSCCPVersion();
 $ast_realtime = $this->srvinterface->sccp_realtime_status();
+$ast_realm = '';
 
 //$ast_realm = (empty($ast_realtime['sccp']) ? '' : 'sccp');
 
 // if there are multiple connections, this will only return the first.
 foreach ($ast_realtime as $key => $value) {
     if (empty($ast_realm)) {
-        if ($value['status'] == 'OK') {
+        if (($value['status'] ?? '') == 'OK') {
             $ast_realm = $key;
         }
     }
@@ -34,8 +35,8 @@ $info['extconfigs'] = $this->extconfigs->info();
 $info['dbinterface'] = $this->dbinterface->info();
 $info['aminterface'] = $this->aminterface->info();
 $info['XML'] = $this->xmlinterface->info();
-$info['sccp_class'] = $driver['sccp'];
-$info['Core_sccp'] = array('Version' => $core['Version'], 'about' => 'Sccp ver.' . $core['Version'] . ' r' . $core['vCode'] . ' Revision :' . $core['RevisionNum'] . ' Hash :' . $core['RevisionHash']);
+$info['sccp_class'] = $driver['sccp'] ?? array('Version' => 'n/a', 'about' => 'SCCP core driver info unavailable');
+$info['Core_sccp'] = array('Version' => ($core['Version'] ?? 'unknown'), 'about' => 'Sccp ver.' . ($core['Version'] ?? 'unknown') . ' r' . ($core['vCode'] ?? '0') . ' Revision :' . ($core['RevisionNum'] ?? '') . ' Hash :' . ($core['RevisionHash'] ?? ''));
 $info['Asterisk'] = array('Version' => FreePBX::Config()->get('ASTVERSION'), 'about' => 'Asterisk.');
 
 
@@ -69,17 +70,17 @@ if (empty($ast_realtime)) {
     $rt_sccp = 'Failed';
     foreach ($ast_realtime as $key => $value) {
         if ($key == $ast_realm) {
-            if ($value['status'] == 'OK') {
+            if (($value['status'] ?? '') == 'OK') {
                 $rt_sccp = 'TEST OK';
-                $rt_info .= '<div> Using SCCP connection found to database: '.$value['realm'] . ' with connector: ['. $key .']</div>';
+                $rt_info .= '<div> Using SCCP connection found to database: '.($value['realm'] ?? '') . ' with connector: ['. $key .']</div>';
             } else {
                 $rt_sccp = 'SCCP ERROR';
-                $rt_info .= '<div class="alert signature alert-danger"> Error : ' . $value['message'] . '</div>';
+                $rt_info .= '<div class="alert signature alert-danger"> Error : ' . ($value['message'] ?? 'unknown') . '</div>';
             }
-        } elseif ($value['status'] == 'ERROR') {
-            $rt_info .= '<div> No connector found for [' . $key . '] : ' . $value['message'] . '</div>';
-        } elseif ($value['status'] == 'OK') {
-            $rt_info .= '<div> Alternative connector found to database '.$value['realm'] . ' with connector: ['. $key . '] </div>';
+        } elseif (($value['status'] ?? '') == 'ERROR') {
+            $rt_info .= '<div> No connector found for [' . $key . '] : ' . ($value['message'] ?? 'unknown') . '</div>';
+        } elseif (($value['status'] ?? '') == 'OK') {
+            $rt_info .= '<div> Alternative connector found to database '.($value['realm'] ?? '') . ' with connector: ['. $key . '] </div>';
         }
     }
     $info['RealTime'] = array('Version' => $rt_sccp, 'about' => $rt_info);
@@ -99,7 +100,7 @@ if (empty($conf_realtime)) {
     }
 }
 // $mysql_info
-if ($mysql_info['Value'] <= '2000') {
+if (($mysql_info['Value'] ?? '0') <= '2000') {
     $this->info_warning['MySql'] = array('Increase Mysql Group Concat Max. Length', 'Step 1: Go to mysql path <br> nano /etc/my.cnf',
         'Step 2: And add the following line below [mysqld] as shown below <br> [mysqld] <br>group_concat_max_len = 4096 or more',
         'Step 3: Save and restart <br> systemctl restart mariadb.service<br> Or <br> service mysqld restart');
@@ -107,13 +108,13 @@ if ($mysql_info['Value'] <= '2000') {
 
 
 // Check Time Zone comatable
-$conf_tz = $this->sccpvalues['ntp_timezone']['data'];
+$conf_tz = $this->sccpvalues['ntp_timezone']['data'] ?? '';
 $cisco_tz = $this->extconfigs->getextConfig('sccp_timezone', $conf_tz);
-if ($cisco_tz['offset'] == 0) {
+if (($cisco_tz['offset'] ?? 0) == 0) {
     if (!empty($conf_tz)) {
-        $tmp_dt = new DateTime(null, new DateTimeZone($conf_tz));
+        $tmp_dt = new \DateTime(null, new \DateTimeZone($conf_tz));
         $tmp_ofset = $tmp_dt->getOffset();
-        if (($cisco_tz['offset'] != ($tmp_ofset / 60) )) {
+        if ((($cisco_tz['offset'] ?? 0) != ($tmp_ofset / 60) )) {
             $this->info_warning['NTP'] = array('The selected NTP time zone is not supported by cisco devices.', 'We will use the Greenwich Time zone');
         }
     }
@@ -132,9 +133,9 @@ global $amp_conf;
 if ($test_any == 1) {
 # Output option list, HTML.
 
-    $timezone_identifiers = DateTimeZone::listIdentifiers();
-    $timezone_abbreviations = DateTimeZone::listAbbreviations();
-    $a = DateTimeZone::listIdentifiers(DateTimeZone::ALL_WITH_BC);
+    $timezone_identifiers = \DateTimeZone::listIdentifiers();
+    $timezone_abbreviations = \DateTimeZone::listAbbreviations();
+    $a = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL_WITH_BC);
 
 
     $Ts_set =  $a[200];
@@ -160,7 +161,7 @@ if ($test_any == 1) {
     if (count($tz_tmp)==1) {
         $time_set = $tz_tmp[0];
     } else {
-        $tmp_dt = new DateTime(null, new DateTimeZone($Ts_set));
+        $tmp_dt = new \DateTime(null, new \DateTimeZone($Ts_set));
         $tmp_ofset = $tmp_dt->getOffset();
         foreach ($tz_tmp as $subArray) {
             if ($subArray['offset'] == $tmp_ofset) {

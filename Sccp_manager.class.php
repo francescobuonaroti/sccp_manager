@@ -84,6 +84,7 @@
 
 namespace FreePBX\modules;
 
+#[\AllowDynamicProperties]
 class Sccp_manager extends \FreePBX_Helpers implements \BMO {
     /* Field Values for type  seq */
 
@@ -117,7 +118,7 @@ class Sccp_manager extends \FreePBX_Helpers implements \BMO {
 
     public function __construct($freepbx = null) {
         if ($freepbx == null) {
-            throw new Exception("Not given a FreePBX Object");
+            throw new \Exception("Not given a FreePBX Object");
         }
         $this->class_error = array();
         $this->FreePBX = $freepbx;
@@ -1527,6 +1528,7 @@ class Sccp_manager extends \FreePBX_Helpers implements \BMO {
 
     public function getCodecs($type, $showDefaults = false) {
         $allSupported = array();
+        $codecs = array();
         $Sccp_Codec = array('alaw', 'ulaw', 'g722', 'g723', 'g726', 'g729', 'gsm', 'h264', 'h263', 'h261');
         switch ($type) {
             case 'audio':
@@ -1546,7 +1548,7 @@ class Sccp_manager extends \FreePBX_Helpers implements \BMO {
                 $allCodecs = $this->FreePBX->Codecs->getImage(true);
                 break;
             default:
-                throw new Exception(_('Unknown Type'));
+                throw new \Exception(_('Unknown Type'));
                 break;
         }
         foreach ($allCodecs as $c => $v) {
@@ -1614,7 +1616,7 @@ class Sccp_manager extends \FreePBX_Helpers implements \BMO {
                 $this->setConfig("imagecodecs", $codecs);
                 break;
             default:
-                throw new Exception(_('Unknown Type'));
+                throw new \Exception(_('Unknown Type'));
                 break;
         }
         return true;

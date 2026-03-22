@@ -10,6 +10,7 @@
 
 namespace FreePBX\modules\Sccp_manager;
 
+#[\AllowDynamicProperties]
 class srvinterface {
 
     var $error;
@@ -22,6 +23,7 @@ class srvinterface {
             $this->paren_class = $this;
         }
         $this->error = "";
+        $this->_info = array();
         $driverNamespace = "\\FreePBX\\Modules\\Sccp_manager";
         $drivers = array('aminterface' => 'aminterface.class.php', 'oldinterface' => 'oldinterface.class.php');
         $ami_mode = false;
@@ -36,7 +38,9 @@ class srvinterface {
                 }
                 if (class_exists($class, false)) {
                     $this->$key = new $class($this->paren_class);
-                    $parent_class->$key = $this->$key;
+                    if (is_object($this->paren_class)) {
+                        $this->paren_class->$key = $this->$key;
+                    }
                     $this->_info [] = $this->$key->info();
                 } else {
                     throw new \Exception("Invalid Class inside in the include folder" . $freepbx);
@@ -271,7 +275,9 @@ class srvinterface {
                         case "2":
                             $result["vCode"] = 420;
                             break;
-                        case 3. . .5:
+                        case "3":
+                        case "4":
+                        case "5":
                             if($version_parts[2] == "3"){
                                 $result["vCode"] = 433;
                             } else {
@@ -330,9 +336,9 @@ class srvinterface {
         } else {
             $time_connect = microtime_float();
             fputs($fp, "Action: login\r\n");
-            fputs($fp, "Username: " . $amp_conf[AMPMGRUSER] . "\r\n");
+            fputs($fp, "Username: " . $amp_conf['AMPMGRUSER'] . "\r\n");
 //        fputs ($fp,"Secret: secret\r\n");
-            fputs($fp, "Secret: " . $amp_conf[AMPMGRPASS] . "\r\n");
+            fputs($fp, "Secret: " . $amp_conf['AMPMGRPASS'] . "\r\n");
             fputs($fp, "Events: on\r\n\r\n");
 
 //            fputs($fp, "Action: SCCPShowDevice\r\n");
