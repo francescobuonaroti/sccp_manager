@@ -513,8 +513,8 @@ function CheckPermissions()
 
 function CheckAsteriskVersion()
 {
-    outn("<li>" . _("Checking Asterisk Version : ") . $version . "</li>");
     $version = FreePBX::Config()->get('ASTVERSION');
+    outn("<li>" . _("Checking Asterisk Version : ") . (string) $version . "</li>");
     if (!empty($version)) {
         // Woo, we have a version
         if (version_compare($version, "12.2.0", ">=")) {
@@ -535,7 +535,10 @@ function CheckChanSCCPCompatible()
 {
     global $srvinterface, $astman;
     if (!$astman) {
-        ie_freepbx('No asterisk manager connection provided!. Installation Failed');
+        die_freepbx('No asterisk manager connection provided!. Installation Failed');
+    }
+    if (!is_object($srvinterface) || !method_exists($srvinterface, 'get_compatible_sccp')) {
+        die_freepbx('SCCP server interface is not available. Installation Failed');
     }
     $sccp_compatible = $srvinterface->get_compatible_sccp();
     outn("<li>" . _("Sccp model Compatible code : ") . $sccp_compatible . "</li>");
@@ -546,10 +549,12 @@ function InstallDB_Buttons()
 {
     global $db;
     outn("<li>" . _("Creating buttons table...") . "</li>");
-//    $check = $db->getRow("SELECT 1 FROM buttonconfig LIMIT 0", DB_FETCHMODE_ASSOC);
-//        if (DB::IsError($check)) {
-    $sql = "DROP TABLE IF EXISTS `buttonconfig`;
-             CREATE TABLE IF NOT EXISTS `sccpbuttonconfig` (
+    $sql_drop = "DROP TABLE IF EXISTS `buttonconfig`";
+    $check = $db->query($sql_drop);
+    if (DB::IsError($check)) {
+        die_freepbx("Can not drop old buttonconfig table, error:$check\n");
+    }
+    $sql_create = "CREATE TABLE IF NOT EXISTS `sccpbuttonconfig` (
             `ref` varchar(15) NOT NULL default '',
             `reftype` enum('sccpdevice', 'sipdevice', 'sccpuser') NOT NULL default 'sccpdevice',
             `instance` tinyint(4) NOT NULL default 0,
@@ -559,7 +564,7 @@ function InstallDB_Buttons()
             PRIMARY KEY  (`ref`,`reftype`,`instance`,`buttontype`),
             KEY `ref` (`ref`,`reftype`)
             ) ENGINE=MyISAM DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;";
-    $check = $db->query($sql);
+    $check = $db->query($sql_create);
     if (DB::IsError($check)) {
             die_freepbx("Can not create sccpbuttonconfig table, error:$check\n");
     }
@@ -746,7 +751,6 @@ function InstallDB_updateSchema($db_config)
             $check = $db->query($sql_modify);
             if (DB::IsError($check)) {
                 out("<li>" . print_r($check, 1) . "</li>");
-                die("Can not modify " . $tabl_name . " table sql: " . $sql_modify . "n");
                 die_freepbx("Can not modify " . $tabl_name . " table sql: " . $sql_modify . "n");
             }
         }
@@ -784,7 +788,7 @@ function InstallDB_updateSccpDevice()
 {
     global $db;
     outn("<li>" . _("Update sccpdevice") . "</li>");
-    $sql = "UPDATE `sccpdevice` set audio_tos='0xB8',audio_cos='6',video_tos='0x88',video_cos='5' where audio_tos=NULL or audio_tos='';";
+    $sql = "UPDATE `sccpdevice` SET audio_tos='0xB8',audio_cos='6',video_tos='0x88',video_cos='5' WHERE audio_tos IS NULL OR audio_tos='';";
     $check = $db->query($sql);
     if (DB::IsError($check)) {
         die_freepbx("Can not REPLACE defaults into sccpdevice table\n");
@@ -1057,7 +1061,7 @@ if ($sccp_compatible == 0) {
 //    die_freepbx('Chan Sccp not Found. Install it before continuing');
     outn("<br>");
     outn("<font color='red'>Chan Sccp not Found. Install it before continuing !</font>");
-    die();
+    die_freepbx('Chan Sccp not Found. Install it before continuing');
 }
 $db_config   = Get_DB_config($sccp_compatible);
 $sccp_db_ver = CheckSCCPManagerDBVersion();
