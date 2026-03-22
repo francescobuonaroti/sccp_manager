@@ -383,14 +383,102 @@ function CheckSCCPManagerDBTables($table_req)
     global $amp_conf;
     global $astman;
     global $db;
+
+    $createMissingTable = function ($tableName) use ($db) {
+        if ($tableName === 'sccpdevice') {
+            $sql = "CREATE TABLE IF NOT EXISTS `sccpdevice` (
+                `name` VARCHAR(20) NOT NULL,
+                `type` VARCHAR(15) NULL DEFAULT NULL,
+                `addon` VARCHAR(100) NULL DEFAULT NULL,
+                `description` VARCHAR(45) NULL DEFAULT NULL,
+                `_description` VARCHAR(45) NULL DEFAULT NULL,
+                `_loginname` VARCHAR(20) NULL DEFAULT NULL,
+                `_profileid` INT(11) NOT NULL DEFAULT '0',
+                `_hwlang` VARCHAR(12) NULL DEFAULT NULL,
+                `button` TEXT NULL,
+                `tzoffset` VARCHAR(5) NULL DEFAULT NULL,
+                `transfer` ENUM('on','off') NULL DEFAULT NULL,
+                `cfwdall` ENUM('on','off') NULL DEFAULT 'on',
+                `cfwdbusy` ENUM('on','off') NULL DEFAULT 'on',
+                `imageversion` VARCHAR(31) NULL DEFAULT NULL,
+                `deny` VARCHAR(100) NULL DEFAULT NULL,
+                `permit` VARCHAR(100) NULL DEFAULT NULL,
+                `dndFeature` ENUM('on','off') NULL DEFAULT NULL,
+                `directrtp` ENUM('on','off') NULL DEFAULT NULL,
+                `earlyrtp` VARCHAR(16) NULL DEFAULT NULL,
+                `mwilamp` VARCHAR(16) NULL DEFAULT NULL,
+                `mwioncall` VARCHAR(8) NULL DEFAULT NULL,
+                `pickupexten` VARCHAR(50) NULL DEFAULT NULL,
+                `pickupcontext` VARCHAR(100) NULL DEFAULT NULL,
+                `pickupmodeanswer` VARCHAR(8) NULL DEFAULT NULL,
+                `private` VARCHAR(8) NULL DEFAULT NULL,
+                `privacy` VARCHAR(16) NULL DEFAULT NULL,
+                `nat` VARCHAR(8) NULL DEFAULT NULL,
+                `softkeyset` VARCHAR(50) NULL DEFAULT NULL,
+                `audio_tos` VARCHAR(10) NULL DEFAULT NULL,
+                `audio_cos` VARCHAR(10) NULL DEFAULT NULL,
+                `video_tos` VARCHAR(10) NULL DEFAULT NULL,
+                `video_cos` VARCHAR(10) NULL DEFAULT NULL,
+                `conf_allow` VARCHAR(8) NULL DEFAULT NULL,
+                `conf_play_general_announce` VARCHAR(8) NULL DEFAULT NULL,
+                `conf_play_part_announce` VARCHAR(8) NULL DEFAULT NULL,
+                `conf_mute_on_entry` VARCHAR(8) NULL DEFAULT NULL,
+                `conf_music_on_hold_class` VARCHAR(80) NULL DEFAULT NULL,
+                `conf_show_conflist` VARCHAR(8) NULL DEFAULT NULL,
+                `setvar` TEXT NULL,
+                `disallow` VARCHAR(255) NULL DEFAULT NULL,
+                `allow` VARCHAR(255) NULL DEFAULT NULL,
+                `backgroundImage` VARCHAR(255) NULL DEFAULT NULL,
+                `ringtone` VARCHAR(255) NULL DEFAULT NULL,
+                PRIMARY KEY (`name`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            return $db->query($sql);
+        }
+
+        if ($tableName === 'sccpline') {
+            $sql = "CREATE TABLE IF NOT EXISTS `sccpline` (
+                `id` MEDIUMINT(9) NOT NULL AUTO_INCREMENT,
+                `name` VARCHAR(20) NOT NULL,
+                `label` VARCHAR(45) NULL DEFAULT NULL,
+                `description` VARCHAR(45) NULL DEFAULT NULL,
+                `pin` VARCHAR(7) NULL DEFAULT NULL,
+                `cid_name` VARCHAR(45) NULL DEFAULT NULL,
+                `cid_num` VARCHAR(45) NULL DEFAULT NULL,
+                `context` VARCHAR(45) NULL DEFAULT NULL,
+                `incominglimit` INT(11) NULL DEFAULT '6',
+                `transfer` ENUM('on','off') NULL DEFAULT NULL,
+                `vmnum` VARCHAR(16) NULL DEFAULT '*97',
+                `musicclass` VARCHAR(45) NULL DEFAULT 'default',
+                `setvar` TEXT NULL,
+                `disallow` VARCHAR(255) NULL DEFAULT NULL,
+                `allow` VARCHAR(255) NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `name` (`name`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            return $db->query($sql);
+        }
+
+        return false;
+    };
+
     outn("<li>" . _("Checking for Sccp_manager database tables..") . "</li>");
     foreach ($table_req as $value) {
         $check = $db->getRow("SELECT 1 FROM `$value` LIMIT 0", DB_FETCHMODE_ASSOC);
         if (DB::IsError($check)) {
-            //print_r("none, creating table :". $value);
-            outn(_("Can't find table: " . $value));
-            outn(_("Please goto the chan-sccp/conf directory and create the DB schema manually (See wiki)"));
-            die_freepbx("!!!! Installation error: Can not find required " . $value . " table !!!!!!\n");
+            outn(_("Can't find table: " . $value . ". Trying to create bootstrap schema..."));
+            $create = $createMissingTable($value);
+            if (DB::IsError($create)) {
+                outn(_("Failed to create table: " . $value));
+                outn(_("Please goto the chan-sccp/conf directory and create the DB schema manually (See wiki)"));
+                die_freepbx("!!!! Installation error: Can not find required " . $value . " table !!!!!!\n");
+            }
+
+            $recheck = $db->getRow("SELECT 1 FROM `$value` LIMIT 0", DB_FETCHMODE_ASSOC);
+            if (DB::IsError($recheck)) {
+                die_freepbx("!!!! Installation error: failed to initialize required " . $value . " table !!!!!!\n");
+            }
+
+            outn(_("Created missing table: " . $value));
         }
     }
 }
