@@ -1996,7 +1996,7 @@ class Sccp_manager extends \FreePBX_Helpers implements \BMO {
             $xml_name = $this->sccppath["tftp_path_store"] . '/VG*.cnf.xml';
             array_map("unlink", glob($xml_name));
         } else {
-            if (!strpos($dev_id, 'SEP')) {
+            if (strpos((string) $dev_id, 'SEP') === false) {
                 return false;
             }
             $xml_name = $this->sccppath["tftp_path_store"] . '/' . $dev_id . '.cnf.xml';
@@ -2295,10 +2295,19 @@ class Sccp_manager extends \FreePBX_Helpers implements \BMO {
     }
 
     private function before($thing, $inthat) {
-        return substr($inthat, 0, strpos($inthat, $thing));
+        $inthat = (string) ($inthat ?? '');
+        $thing = (string) ($thing ?? '');
+        $pos = strpos($inthat, $thing);
+        if ($pos === false) {
+            return $inthat;
+        }
+        return substr($inthat, 0, $pos);
     }
 
     private function array_key_exists_recursive($key, $arr) {
+        if (!is_array($arr)) {
+            return false;
+        }
         if (array_key_exists($key, $arr)) {
             return true;
         }

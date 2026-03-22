@@ -166,8 +166,9 @@ class oldinterface
         foreach ($ast_out as $line) {
             if (strlen($line) > 3) {
                 list ($line, $junk) = explode(' ', $line);
-                if (!is_bool(strpos($line, ':'))) {
-                    $line = trim(substr($line, 0, strpos($line, ':')));
+                $sepPos = strpos($line, ':');
+                if ($sepPos !== false) {
+                    $line = trim(substr($line, 0, $sepPos));
                 }
                 if (isset($ast_key[$line])) {
                     if (strlen($ast_key[$line]) < 1) {

@@ -16,6 +16,8 @@ class srvinterface {
     var $error;
     var $_info;
     var $ami_mode;
+    var $aminterface;
+    var $oldinterface;
 
     public function __construct($parent_class = null) {
         $this->paren_class = $parent_class;
@@ -24,6 +26,8 @@ class srvinterface {
         }
         $this->error = "";
         $this->_info = array();
+        $this->aminterface = null;
+        $this->oldinterface = null;
         $driverNamespace = "\\FreePBX\\Modules\\Sccp_manager";
         $drivers = array('aminterface' => 'aminterface.class.php', 'oldinterface' => 'oldinterface.class.php');
         $ami_mode = false;
@@ -54,10 +58,10 @@ class srvinterface {
                 }
             }
         }
-        if ($this->aminterface->status()) {
+        if (is_object($this->aminterface) && method_exists($this->aminterface, 'status') && $this->aminterface->status()) {
             $this->aminterface->open();
         }
-        $this->ami_mode = $this->aminterface->status();
+        $this->ami_mode = (is_object($this->aminterface) && method_exists($this->aminterface, 'status')) ? $this->aminterface->status() : false;
     }
 
     public function info() {
