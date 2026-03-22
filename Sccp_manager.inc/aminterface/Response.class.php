@@ -38,9 +38,11 @@ abstract class Response extends IncomingMessage
     public function addEvent($event)
     {
         $this->_events[] = $event;
-        if (stristr($event->getEventList(), 'complete') !== false
-            || stristr($event->getName(), 'complete') !== false
-            || stristr($event->getName(), 'DBGetResponse') !== false
+        $eventList = (string) ($event->getEventList() ?? '');
+        $eventName = (string) ($event->getName() ?? '');
+        if (stristr($eventList, 'complete') !== false
+            || stristr($eventName, 'complete') !== false
+            || stristr($eventName, 'DBGetResponse') !== false
         ) {
             $this->_completed = true;
         }
@@ -52,14 +54,16 @@ abstract class Response extends IncomingMessage
 
     public function isSuccess()
     {
-        return stristr($this->getKey('Response'), 'Error') === false;
+        return stristr((string) ($this->getKey('Response') ?? ''), 'Error') === false;
     }
 
     public function isList()
     {
+        $eventList = (string) ($this->getKey('EventList') ?? '');
+        $message = (string) ($this->getMessage() ?? '');
         return
-            stristr($this->getKey('EventList'), 'start') !== false
-            || stristr($this->getMessage(), 'follow') !== false
+            stristr($eventList, 'start') !== false
+            || stristr($message, 'follow') !== false
         ;
     }
 
@@ -184,22 +188,24 @@ class SCCPGeneric_Response extends Response
         //        print_r($event->getEventList());
 
         // Nothing to do with this - we need a table start
-        if (stristr($event->getEventList(), 'start')) { return; }
+        $eventList = (string) ($event->getEventList() ?? '');
+        $eventName = (string) ($event->getName() ?? '');
+        if (stristr($eventList, 'start')) { return; }
 
 
         // This is empty as soon as we have received a TableStart.
         // The next message is the first of the data sets
         // We use this variable in the switch to add set entries
         if ( empty($thisSetEventEntryType)) {
-            if (strpos($event->getName(), 'Entry')) {
-                $thisSetEventEntryType = $event->getName();
+            if (strpos($eventName, 'Entry') !== false) {
+                $thisSetEventEntryType = $eventName;
             } else {
                 $thisSetEventEntryType = 'undefinedAsThisIsNotASet';
             }
         }
         $unknownevent = "FreePBX\\modules\\Sccp_manager\\aminterface\\UnknownEvent";
         if (!($event instanceof $unknownevent)) {
-            switch ( $event->getName()) {
+            switch ($eventName) {
                 case $thisSetEventEntryType :
                     $this->_temptable['Entries'][] = $event;
                     break;
@@ -235,7 +241,7 @@ class SCCPGeneric_Response extends Response
                 $this->_events[] = $event;
             }
         // Received a complete eventList outside of a table.
-        if (stristr($event->getEventList(), 'complete') || stristr($event->getName(), 'complete')) {
+          if (stristr($eventList, 'complete') || stristr($eventName, 'complete')) {
               return $this->_completed = true;
         }
     }

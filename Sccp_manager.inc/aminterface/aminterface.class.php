@@ -345,7 +345,11 @@ class aminterface
 
     public function _eventFromRaw($message)
     {
-        $eventStart = strpos($message, 'Event: ') + 7;
+        $eventPos = strpos($message, 'Event: ');
+        if ($eventPos === false) {
+            return new aminterface\UnknownEvent($message);
+        }
+        $eventStart = $eventPos + 7;
 
         if ($eventStart > strlen($message)) {
             return new aminterface\UnknownEvent($message);
@@ -502,6 +506,7 @@ class aminterface
     }
     function sccpDeviceReset($devicename, $action = '')
     {
+        $result = array('data' => '', 'Response' => 'Error');
         if ($this->_connect_state) {
             if ($action == 'tokenack') {
                 $_action = new \FreePBX\modules\Sccp_manager\aminterface\SCCPTokenAckAction($devicename);
@@ -550,18 +555,19 @@ class aminterface
             $_action = new \FreePBX\modules\Sccp_manager\aminterface\CommandAction('realtime mysql status');
             $result = $this->send($_action)->getResult();
          }
-         if (is_array($result['Output'])) {
+         if (is_array($result) && !empty($result['Output']) && is_array($result['Output'])) {
              foreach ($result['Output'] as $aline) {
                  if (strlen($aline) > 3) {
                      $temp_strings = explode(' ', $aline);
                      $cmd_res_key = $temp_strings[0];
+                     $this_realm = '';
                      foreach ($temp_strings as $test_string) {
-                          if (strpos($test_string, '@')) {
+                          if (strpos($test_string, '@') !== false) {
                             $this_realm = $test_string;
                             break;
                           }
                      }
-                     $cmd_res[$cmd_res_key] = array('message' => $aline, 'realm' => $this_realm, 'status' => strpos($aline, 'connected') ? 'OK' : 'ERROR');
+                     $cmd_res[$cmd_res_key] = array('message' => $aline, 'realm' => $this_realm, 'status' => (strpos($aline, 'connected') !== false) ? 'OK' : 'ERROR');
                  }
             }
         }
