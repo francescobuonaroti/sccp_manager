@@ -652,6 +652,10 @@ function InstallDB_updateSchema($db_config)
         if (DB::IsError($db_result)) {
             die_freepbx("Can not add get information from " . $tabl_name . " table\n");
         }
+        $existing_columns = array();
+        foreach ($db_result as $existing_col) {
+            $existing_columns[$existing_col[0]] = true;
+        }
         foreach ($db_result as $tabl_data) {
             $fld_id = $tabl_data[0];
             if (!empty($tab_modify[$fld_id])) {
@@ -668,12 +672,18 @@ function InstallDB_updateSchema($db_config)
                 }
                 if (!empty($tab_modify[$fld_id]['rename'])) {
                     $fld_id_source = $tab_modify[$fld_id]['rename'];
-                    $db_config[$tabl_name][$fld_id_source]['status'] = 'yes';
-                    if (!empty($db_config[$tabl_name][$fld_id_source]['create'])) {
-                        $db_config[$tabl_name][$fld_id]['create'] = $db_config[$tabl_name][$fld_id_source]['create'];
+                    if (!empty($existing_columns[$fld_id_source])) {
+                        // Target rename field already exists: skip CHANGE COLUMN to avoid duplicate-column errors.
+                        $db_config[$tabl_name][$fld_id]['rename_skip'] = 'yes';
+                        $db_config[$tabl_name][$fld_id]['rename_target'] = $fld_id_source;
                     } else {
-                        $db_config[$tabl_name][$fld_id]['create'] = strtoupper((string) ($tabl_data[1] ?? '')).(((string) ($tabl_data[2] ?? '') == 'NO') ?' NOT NULL': ' NULL');
-                        $db_config[$tabl_name][$fld_id]['create'] .= ' DEFAULT '. ((empty($tabl_data[4]))?'NULL': "'". $tabl_data[4]."'" );
+                        $db_config[$tabl_name][$fld_id_source]['status'] = 'yes';
+                        if (!empty($db_config[$tabl_name][$fld_id_source]['create'])) {
+                            $db_config[$tabl_name][$fld_id]['create'] = $db_config[$tabl_name][$fld_id_source]['create'];
+                        } else {
+                            $db_config[$tabl_name][$fld_id]['create'] = strtoupper((string) ($tabl_data[1] ?? '')).(((string) ($tabl_data[2] ?? '') == 'NO') ?' NOT NULL': ' NULL');
+                            $db_config[$tabl_name][$fld_id]['create'] .= ' DEFAULT '. ((empty($tabl_data[4]))?'NULL': "'". $tabl_data[4]."'" );
+                        }
                     }
                 }
             }
@@ -682,7 +692,7 @@ function InstallDB_updateSchema($db_config)
         $sql_modify = '';
         $sql_update = '';
 
-        foreach ($tab_modify as $row_fld => $row_data) {
+        foreach ($tab_modify as $row_fld => &$row_data) {
             if (empty($row_data['status'])) {
                 if (!empty($row_data['create'])) {
                     $sql_create .= 'ADD COLUMN `' . $row_fld . '` ' . $row_data['create'] . ', ';
@@ -690,8 +700,13 @@ function InstallDB_updateSchema($db_config)
                 }
             } else {
                 if (!empty($row_data['rename'])) {
-                    $sql_modify .= 'CHANGE COLUMN `' . $row_fld . '` `' . $row_data['rename'] . '` ' . $row_data['create'] . ', ';
-                    $count_modify ++;
+                    if (empty($row_data['rename_skip'])) {
+                        $sql_modify .= 'CHANGE COLUMN `' . $row_fld . '` `' . $row_data['rename'] . '` ' . $row_data['create'] . ', ';
+                        $count_modify ++;
+                    } else {
+                        $target_fld = $row_data['rename_target'] ?? $row_data['rename'];
+                        $sql_update .= "UPDATE " . $tabl_name . " SET `" . $target_fld . "` = CASE WHEN `" . $target_fld . "` IS NULL OR `" . $target_fld . "` = '' THEN `" . $row_fld . "` ELSE `" . $target_fld . "` END; ";
+                    }
                 }
                 if (!empty($row_data['modify'])) {
                     if (empty($row_data['mod_stat'])) {
@@ -721,6 +736,7 @@ function InstallDB_updateSchema($db_config)
                 }
             }
         }
+        unset($row_data);
 //        out("<li>" . print_r($sql_update, 1) . "</li>");
 //        out("<li>" . print_r($sql_modify, 1) . "</li>");
 //       die("Can not modify Е" . $tabl_name . " table sql: " . $sql_modify . "n");
