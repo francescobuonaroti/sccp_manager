@@ -535,10 +535,12 @@ function CheckChanSCCPCompatible()
 {
     global $srvinterface, $astman;
     if (!$astman) {
-        die_freepbx('No asterisk manager connection provided!. Installation Failed');
+        outn("<li><font color='orange'>AMI connection not available during install. Continuing with fallback SCCP compatibility.</font></li>");
+        return 0;
     }
     if (!is_object($srvinterface) || !method_exists($srvinterface, 'get_compatible_sccp')) {
-        die_freepbx('SCCP server interface is not available. Installation Failed');
+        outn("<li><font color='orange'>SCCP server interface is not available during install. Continuing with fallback SCCP compatibility.</font></li>");
+        return 0;
     }
     $sccp_compatible = $srvinterface->get_compatible_sccp();
     outn("<li>" . _("Sccp model Compatible code : ") . $sccp_compatible . "</li>");
@@ -1058,10 +1060,9 @@ CheckSCCPManagerDBTables($table_req);
 CheckAsteriskVersion();
 $sccp_compatible = CheckChanSCCPCompatible();
 if ($sccp_compatible == 0) {
-//    die_freepbx('Chan Sccp not Found. Install it before continuing');
     outn("<br>");
-    outn("<font color='red'>Chan Sccp not Found. Install it before continuing !</font>");
-    die_freepbx('Chan Sccp not Found. Install it before continuing');
+    outn("<font color='orange'>Chan Sccp not Found during install. Using fallback compatibility profile (4.3.3+) and continuing.</font>");
+    $sccp_compatible = 433;
 }
 $db_config   = Get_DB_config($sccp_compatible);
 $sccp_db_ver = CheckSCCPManagerDBVersion();
