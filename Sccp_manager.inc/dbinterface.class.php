@@ -193,7 +193,7 @@ class dbinterface
             case "byciscoid":
                 if (!empty($filter)) {
                     if (!empty($filter['model'])) {
-                        if (strpos($filter['model'], 'loadInformation')) {
+                        if (strpos((string) $filter['model'], 'loadInformation') !== false) {
                             $sql = "SELECT " . $sel_inf . " FROM sccpdevmodel WHERE (`loadinformationid` ='" . $filter['model'] . "') ORDER BY model ";
                         } else {
                             $sql = "SELECT " . $sel_inf . " FROM sccpdevmodel WHERE (`loadinformationid` ='loadInformation" . $filter['model'] . "') ORDER BY model ";

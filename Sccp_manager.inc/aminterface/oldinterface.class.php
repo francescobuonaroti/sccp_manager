@@ -98,11 +98,14 @@ class oldinterface
         if (empty($dev_id)) {
             return array();
         }
+        $res3 = array();
         $res = $this->sccp_core_commands(array('cmd' => 'get_dev_info', 'name' => $dev_id));
         $res1 = str_replace(array("\r\n", "\r", "\n"), ';', strip_tags((string) $res['data']));
-        if (strpos($res1, 'MAC-Address')) {
-            $res2 = substr($res1, 0, strpos($res1, '+--- Buttons '));
-            $res1 = explode(';', substr($res2, strpos($res2, 'MAC-Address')));
+        $macPos = strpos($res1, 'MAC-Address');
+        if ($macPos !== false) {
+            $buttonsPos = strpos($res1, '+--- Buttons ');
+            $res2 = ($buttonsPos !== false) ? substr($res1, 0, $buttonsPos) : $res1;
+            $res1 = explode(';', substr($res2, $macPos));
             foreach ($res1 as $data) {
                 if (!empty($data)) {
                     $tmp = explode(':', $data);
@@ -191,7 +194,7 @@ class oldinterface
         foreach ($ast_out as $line) {
             if (strlen($line) > 3) {
                 $ast_key = strstr(trim($line), ' ', true);
-                $ast_res[$ast_key] = array('message' => $line, 'status' => strpos($line, 'connected') ? 'OK' : 'ERROR');
+                $ast_res[$ast_key] = array('message' => $line, 'status' => (strpos($line, 'connected') !== false) ? 'OK' : 'ERROR');
             }
         }
         return $ast_res;
@@ -268,7 +271,7 @@ class oldinterface
     private function sccp_version()
     {
         $ast_out = $this->sccp_core_commands(array('cmd' => 'get_version'));
-        if (($ast_out['Response'] == 'Error') ||  (strpos($ast_out['data'], 'No such command') != false)) {
+        if (($ast_out['Response'] == 'Error') || (strpos((string) ($ast_out['data'] ?? ''), 'No such command') !== false)) {
             return array('-1');
         }
         if (preg_match("/Release.*\(/", $ast_out['data'], $matches)) {
@@ -288,7 +291,16 @@ class oldinterface
         }
         $metadata = $this->astman_retrieveJSFromMetaData("");
 //        return $metadata;
-        if ($metadata && array_key_exists("Version", $metadata)) {
+        if (is_string($metadata)) {
+            $decoded = json_decode($metadata, true);
+            if (is_array($decoded)) {
+                $metadata = $decoded;
+            }
+        }
+        if (!is_array($metadata)) {
+            return null;
+        }
+        if (array_key_exists("Version", $metadata)) {
             $result["Version"] = $metadata["Version"];
             $version_parts = explode(".", $metadata["Version"]);
             $result["vCode"] = 0;
@@ -296,14 +308,14 @@ class oldinterface
             # not sure about this sccp_ver numbering. Might be better to just check "Version" and Revision
             # $result["vCode"] = implode('', $version_parts);
             $result["vCode"] = 0;
-            if ($version_parts[0] == "4") {
+            if (($version_parts[0] ?? '') == "4") {
                 $result["vCode"] = 400;
-                if ($version_parts[1] == "1") {
+                if (($version_parts[1] ?? '') == "1") {
                     $result["vCode"] = 410;
-                } elseif ($version_parts[1] == "2") {
+                } elseif (($version_parts[1] ?? '') == "2") {
                     $result["vCode"] = 420;
-                } elseif ($version_parts[1] >= "3") {
-                    if ($version_parts[2] == "3"){
+                } elseif (($version_parts[1] ?? '') >= "3") {
+                    if (($version_parts[2] ?? '') == "3") {
                         $result["vCode"] = 433;
                     } else {
                         $result["vCode"] = 430;
@@ -456,28 +468,33 @@ class oldinterface
 
     private function strpos_array($haystack, $needles)
     {
+        $haystack = (string) ($haystack ?? '');
         if (is_array($needles)) {
             foreach ($needles as $str) {
                 if (is_array($str)) {
                     $pos = $this->strpos_array($haystack, $str);
                 } else {
-                    $pos = strpos($haystack, $str);
+                    $pos = strpos($haystack, (string) ($str ?? ''));
                 }
                 if ($pos !== false) {
                     return $pos;
                 }
             }
         } else {
-            return strpos($haystack, $needles);
+            return strpos($haystack, (string) ($needles ?? ''));
         }
         return false;
     }
 
     private function loc_after($value, $inthat)
     {
-        if (!is_bool(strpos($inthat, $value))) {
-            return substr($inthat, strpos($inthat, $value) + strlen($value));
+        $inthat = (string) ($inthat ?? '');
+        $value = (string) ($value ?? '');
+        $pos = strpos($inthat, $value);
+        if ($pos !== false) {
+            return substr($inthat, $pos + strlen($value));
         }
+        return '';
     }
 
     function getеtestChanSCC()

@@ -263,12 +263,23 @@ class srvinterface {
             $result = array();
             $metadata = $this->aminterface->getSCCPVersion();
 
-            if ($metadata && array_key_exists("Version", $metadata)) {
+            if (is_string($metadata)) {
+                $decoded = json_decode($metadata, true);
+                if (is_array($decoded)) {
+                    $metadata = $decoded;
+                }
+            }
+
+            if (!is_array($metadata)) {
+                return null;
+            }
+
+            if (array_key_exists("Version", $metadata)) {
                 $result["Version"] = $metadata["Version"];
                 $version_parts = explode(".", $metadata["Version"]);
                 $result["vCode"] = 0;
-                if ($version_parts[0] == "4") {
-                    switch ($version_parts[1]) {
+                if (($version_parts[0] ?? '') == "4") {
+                    switch ($version_parts[1] ?? '') {
                         case "1":
                             $result["vCode"] = 410;
                             break;
@@ -278,7 +289,7 @@ class srvinterface {
                         case "3":
                         case "4":
                         case "5":
-                            if($version_parts[2] == "3"){
+                            if (($version_parts[2] ?? '') == "3") {
                                 $result["vCode"] = 433;
                             } else {
                                 $result["vCode"] = 430;

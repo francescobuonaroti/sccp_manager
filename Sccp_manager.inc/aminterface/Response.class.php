@@ -190,7 +190,7 @@ class SCCPGeneric_Response extends Response
         // Nothing to do with this - we need a table start
         $eventList = (string) ($event->getEventList() ?? '');
         $eventName = (string) ($event->getName() ?? '');
-        if (stristr($eventList, 'start')) { return; }
+        if (stristr($eventList, 'start') !== false) { return; }
 
 
         // This is empty as soon as we have received a TableStart.
@@ -241,7 +241,7 @@ class SCCPGeneric_Response extends Response
                 $this->_events[] = $event;
             }
         // Received a complete eventList outside of a table.
-          if (stristr($eventList, 'complete') || stristr($eventName, 'complete')) {
+          if (stristr($eventList, 'complete') !== false || stristr($eventName, 'complete') !== false) {
               return $this->_completed = true;
         }
     }
