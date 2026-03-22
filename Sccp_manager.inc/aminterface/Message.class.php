@@ -146,15 +146,22 @@ abstract class Message
                     if (!isset($value) || $value === null || strlen($value) == 0) {
                         return '';
                     }
-                    if (filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)) {
-                        return (boolean) $value;
-                    } elseif (filter_var($value, FILTER_SANITIZE_STRING, FILTER_NULL_ON_FAILURE)) {
-                        return (string) $value;
-                    } elseif (filter_var($value, FILTER_SANITIZE_FULL_SPECIAL_CHARS, FILTER_NULL_ON_FAILURE)) {
-                        return (string) htmlspecialchars($value, ENT_QUOTES);
-                    } else {
-                        throw new AMIException("Incoming String is not sanitary. Skipping: '" . $value . "'\n");
+                    $boolValue = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if ($boolValue !== null) {
+                        return $boolValue;
                     }
+                    if (!is_scalar($value)) {
+                        throw new AMIException("Incoming String is not sanitary. Skipping: '" . print_r($value, true) . "'\n");
+                    }
+                    $stringValue = trim((string) $value);
+                    if ($stringValue === '') {
+                        return '';
+                    }
+                    // Reject control chars that can break AMI framing/parsing.
+                    if (preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $stringValue)) {
+                        throw new AMIException("Incoming String is not sanitary. Skipping: '" . $stringValue . "'\n");
+                    }
+                    return (string) htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
                     break;
                 case 'numeric':
                     if (!isset($value) || $value === null || strlen($value) == 0) {
@@ -168,7 +175,7 @@ abstract class Message
                         return (double) $value;
                     }
                 default:
-                    throw new PAMIException("Don't know how to convert: '" . $value . "'\n");
+                    throw new AMIException("Don't know how to convert: '" . $value . "'\n");
                     break;
             }
         }

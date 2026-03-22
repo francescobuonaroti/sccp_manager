@@ -362,7 +362,7 @@ class SCCPGeneric_Response extends Response
         if ($this->hasTable() && array_key_exists($tablename, $this->_tables)) {
             return $this->_tables[$tablename];
         }
-        throw new PAMIException("No such table.");
+        throw new AMIException("No such table.");
     }
     public function getJSON()
     {
