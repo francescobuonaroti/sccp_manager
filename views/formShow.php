@@ -386,7 +386,7 @@ foreach ($items as $child) {
                             $opt_hide .= ' data-vshow="'.$child->option_show.'" data-clshow="'.$child->option_show['class'].'" ';
                         }
                         foreach ($child->xpath('button') as $value) {
-                            $val_check = strtolower((string)$value[@value]);
+                            $val_check = strtolower((string)$value['value']);
                             if ($val_check == strtolower($res_v)) {
                                 $val_check = " checked";
                             } else {
@@ -396,7 +396,7 @@ foreach ($items as $child) {
                                    } else {$val_check = "";}
                                 } else {$val_check = "";}
                             }
-                            echo '<input type="radio" name="' . $res_id . '" id="' . $res_id. '_' . $i .'" value="' . $value[@value] . '"' . $val_check . $opt_hide.'>';
+                            echo '<input type="radio" name="' . $res_id . '" id="' . $res_id. '_' . $i .'" value="' . $value['value'] . '"' . $val_check . $opt_hide.'>';
                             echo '<label for="' . $res_id. '_' . $i . '">' . _($value) .  '</label>';
                             $i++;
                         }
@@ -624,8 +624,8 @@ foreach ($items as $child) {
                         }
                     }
                     foreach ($child->xpath('select') as $value) {
-                        if (!empty($value[@value])) {
-                                $key = $value[@value];
+                        if (!empty($value['value'])) {
+                                $key = (string)$value['value'];
                         } else {
                             $key =  (string)$value;
                         }

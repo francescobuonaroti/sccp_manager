@@ -266,7 +266,7 @@ class extconfigs
         'New Zealand' => array('offset' => '720', 'daylight' => 'Daylight')
     );
 
-    public function validate_init_path($confDir = '', $db_vars, $sccp_driver_replace = '')
+    public function validate_init_path($confDir = '', $db_vars = array(), $sccp_driver_replace = '')
     {
 //        global $db;
 //        global $amp_conf;
